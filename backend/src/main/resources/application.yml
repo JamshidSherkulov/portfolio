@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: portfolio-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/portfolio_db
+    username: portfolio-user
+    password: portfolio0309
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
