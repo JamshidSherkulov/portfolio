@@ -2,6 +2,7 @@ package com.portfolio.backend.auth.controller;
 
 
 import com.portfolio.backend.auth.dto.AuthResponse;
+import com.portfolio.backend.auth.dto.LoginRequest;
 import com.portfolio.backend.auth.dto.RegisterRequest;
 import com.portfolio.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -20,5 +21,10 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }

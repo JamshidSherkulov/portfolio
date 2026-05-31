@@ -19,3 +19,9 @@ spring:
 
 server:
   port: 8080
+
+application:
+  security:
+    jwt:
+      secret-key: 1234567890123456789012345678901234567890123456789012345678901234
+      expiration: 3600000
