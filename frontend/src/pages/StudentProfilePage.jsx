@@ -75,6 +75,15 @@ function formToPayload(form) {
   }
 }
 
+function FormSection({ title, children }) {
+  return (
+    <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+      {children}
+    </section>
+  )
+}
+
 export default function StudentProfilePage() {
   const [form, setForm] = useState(emptyForm)
   const [hasProfile, setHasProfile] = useState(false)
@@ -106,29 +115,38 @@ export default function StudentProfilePage() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
+  function validateForm() {
+    if (!form.firstName.trim()) {
+      return 'First name is required.'
+    }
+    if (!form.lastName.trim()) {
+      return 'Last name is required.'
+    }
+    return null
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
     setSuccess('')
 
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError('First name and last name are required.')
+    const validationError = validateForm()
+    if (validationError) {
+      setError(validationError)
       return
     }
 
     setSubmitting(true)
 
-    const isUpdate = hasProfile
-
     try {
       const payload = formToPayload(form)
-      const profile = isUpdate
+      const profile = hasProfile
         ? await updateMyStudentProfile(payload)
         : await createMyStudentProfile(payload)
 
       setForm(profileToForm(profile))
       setHasProfile(true)
-      setSuccess(isUpdate ? 'Profile updated successfully.' : 'Profile created successfully.')
+      setSuccess('Profile saved successfully.')
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to save profile.'))
     } finally {
@@ -139,7 +157,9 @@ export default function StudentProfilePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <p className="text-slate-600">Loading profile...</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-slate-600">Loading profile...</p>
+        </div>
       </div>
     )
   }
@@ -153,7 +173,7 @@ export default function StudentProfilePage() {
           : 'Create your profile to start building your proof-of-work portfolio.'}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
           <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
             {error}
@@ -165,8 +185,7 @@ export default function StudentProfilePage() {
           </p>
         )}
 
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Basic info</h2>
+        <FormSection title="Personal information">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="firstName" className={labelClass}>
@@ -231,10 +250,9 @@ export default function StudentProfilePage() {
               className={textareaClass}
             />
           </div>
-        </section>
+        </FormSection>
 
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Education</h2>
+        <FormSection title="Education and availability">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="university" className={labelClass}>
@@ -273,10 +291,6 @@ export default function StudentProfilePage() {
               className={inputClass}
             />
           </div>
-        </section>
-
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Career preferences</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="preferredRole" className={labelClass}>
@@ -317,10 +331,9 @@ export default function StudentProfilePage() {
               className={inputClass}
             />
           </div>
-        </section>
+        </FormSection>
 
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Links & skills</h2>
+        <FormSection title="Links">
           <div>
             <label htmlFor="githubUrl" className={labelClass}>
               GitHub URL
@@ -373,6 +386,9 @@ export default function StudentProfilePage() {
               className={inputClass}
             />
           </div>
+        </FormSection>
+
+        <FormSection title="Skills">
           <div>
             <label htmlFor="skillsText" className={labelClass}>
               Skills
@@ -382,23 +398,19 @@ export default function StudentProfilePage() {
               name="skillsText"
               value={form.skillsText}
               onChange={handleChange}
-              placeholder="React, Java, Spring Boot"
+              placeholder="Java, Spring Boot, PostgreSQL"
               className={inputClass}
             />
             <p className="mt-1 text-xs text-slate-500">Separate skills with commas.</p>
           </div>
-        </section>
+        </FormSection>
 
         <button
           type="submit"
           disabled={submitting}
           className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
         >
-          {submitting
-            ? 'Saving...'
-            : hasProfile
-              ? 'Save profile'
-              : 'Create profile'}
+          {submitting ? 'Saving...' : hasProfile ? 'Save profile' : 'Create profile'}
         </button>
       </form>
     </div>

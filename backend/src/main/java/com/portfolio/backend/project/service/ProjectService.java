@@ -95,12 +95,14 @@ public class ProjectService {
         project.setTitle(clean(request.title()));
         project.setDescription(clean(request.description()));
         project.setProofSummary(clean(request.proofSummary()));
-        project.setTechStack(cleanList(request.techStack()));
         project.setGithubUrl(clean(request.githubUrl()));
         project.setLiveDemoUrl(clean(request.liveDemoUrl()));
         project.setImageUrl(clean(request.imageUrl()));
         project.setProjectType(clean(request.projectType()));
         project.setStatus(clean(request.status()));
+
+        project.getTechStack().clear();
+        project.getTechStack().addAll(cleanList(request.techStack()));
 
         Project updatedProject = projectRepository.save(project);
 
@@ -158,6 +160,6 @@ public class ProjectService {
                 .filter(value -> value != null && !value.trim().isBlank())
                 .map(String::trim)
                 .distinct()
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 }

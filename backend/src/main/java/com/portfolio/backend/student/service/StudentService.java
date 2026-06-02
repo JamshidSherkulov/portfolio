@@ -98,7 +98,10 @@ public class StudentService {
         profile.setLinkedinUrl(clean(request.linkedinUrl()));
         profile.setPortfolioUrl(clean(request.portfolioUrl()));
         profile.setProfileImageUrl(clean(request.profileImageUrl()));
-        profile.setSkills(cleanSkills(request.skills()));
+
+
+        profile.getSkills().clear();
+        profile.getSkills().addAll(cleanSkills(request.skills()));
 
         StudentProfile updatedProfile = studentProfileRepository.save(profile);
 
@@ -140,6 +143,6 @@ public class StudentService {
                 .filter(skill -> skill != null && !skill.trim().isBlank())
                 .map(String::trim)
                 .distinct()
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 }
