@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   createMyProject,
   deleteMyProject,
@@ -62,6 +62,7 @@ function projectCountLabel(count) {
 }
 
 export default function StudentProjectsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [projects, setProjects] = useState([])
   const [form, setForm] = useState(emptyForm)
   const [editingProjectId, setEditingProjectId] = useState(null)
@@ -136,6 +137,16 @@ export default function StudentProjectsPage() {
     setError('')
     setSuccess('')
   }
+
+  useEffect(() => {
+    if (loading || needsProfile || searchParams.get('add') !== 'true') {
+      return
+    }
+
+    openCreateForm()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSearchParams({}, { replace: true })
+  }, [loading, needsProfile, searchParams, setSearchParams])
 
   function openEditForm(project) {
     setEditingProjectId(project.id)
