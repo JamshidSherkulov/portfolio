@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { getApiErrorMessage } from '../utils/apiError'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -11,8 +12,13 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated && role === 'STUDENT') {
+    if (!isAuthenticated || !role) {
+      return
+    }
+    if (role === 'STUDENT') {
       navigate('/student/dashboard', { replace: true })
+    } else if (role === 'EMPLOYER') {
+      navigate('/employer/dashboard', { replace: true })
     }
   }, [isAuthenticated, role, navigate])
 
@@ -22,14 +28,14 @@ export default function LoginPage() {
     setSubmitting(true)
 
     try {
-      const data = await login({ email, password })
+      const data = await login(email, password)
       if (data.role === 'STUDENT') {
         navigate('/student/dashboard')
-      } else {
-        navigate('/')
+      } else if (data.role === 'EMPLOYER') {
+        navigate('/employer/dashboard')
       }
-    } catch {
-      setError('Invalid email or password. Please try again.')
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Invalid email or password. Please try again.'))
     } finally {
       setSubmitting(false)
     }
@@ -38,15 +44,11 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
       <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Welcome back to Portfolia.
-      </p>
+      <p className="mt-2 text-sm text-slate-600">Welcome back to Portfolia.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         {error && (
-          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </p>
+          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
         )}
 
         <div>

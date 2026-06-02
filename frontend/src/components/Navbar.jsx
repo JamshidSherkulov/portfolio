@@ -18,7 +18,7 @@ export default function Navbar() {
           Portfolia
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {!isAuthenticated && (
             <>
               <NavLink to="/login" className={linkClass}>
@@ -47,12 +47,24 @@ export default function Navbar() {
             </>
           )}
 
+          {isAuthenticated && role === 'EMPLOYER' && (
+            <>
+              <NavLink to="/employer/dashboard" className={linkClass}>
+                Dashboard
+              </NavLink>
+              <NavLink to="/employer/profile" className={linkClass}>
+                Company Profile
+              </NavLink>
+              <NavLink to="/employer/candidates" className={linkClass}>
+                Candidates
+              </NavLink>
+            </>
+          )}
+
           {isAuthenticated && (
             <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
               {email && (
-                <span className="hidden text-sm text-slate-500 sm:inline">
-                  {email}
-                </span>
+                <span className="hidden text-sm text-slate-500 sm:inline">{email}</span>
               )}
               <button
                 type="button"

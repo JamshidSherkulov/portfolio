@@ -22,6 +22,8 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResponse register(RegisterRequest request) {
+        String email = request.email().toLowerCase().trim();
+
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email is already registered");
         }
