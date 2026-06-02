@@ -7,6 +7,7 @@ import {
   updateMyProject,
 } from '../api/projects'
 import ProjectCard from '../components/ProjectCard'
+import ProjectDetailsModal from '../components/ProjectDetailsModal'
 import { getApiErrorMessage } from '../utils/apiError'
 import {
   inputClass,
@@ -56,6 +57,10 @@ function formToPayload(form) {
   }
 }
 
+function projectCountLabel(count) {
+  return count === 1 ? '1 project' : `${count} projects`
+}
+
 export default function StudentProjectsPage() {
   const [projects, setProjects] = useState([])
   const [form, setForm] = useState(emptyForm)
@@ -67,6 +72,7 @@ export default function StudentProjectsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [needsProfile, setNeedsProfile] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null)
 
   async function loadProjects() {
     setError('')
@@ -90,9 +96,37 @@ export default function StudentProjectsPage() {
     loadProjects()
   }, [])
 
+  useEffect(() => {
+    if (!selectedProject) {
+      return undefined
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setSelectedProject(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [selectedProject])
+
   function handleChange(event) {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  function openViewDetails(project) {
+    setSelectedProject(project)
+  }
+
+  function closeViewDetails() {
+    setSelectedProject(null)
+  }
+
+  function handleEditFromModal(project) {
+    setSelectedProject(null)
+    openEditForm(project)
   }
 
   function openCreateForm() {
@@ -109,6 +143,7 @@ export default function StudentProjectsPage() {
     setShowForm(true)
     setError('')
     setSuccess('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function cancelForm() {
@@ -172,6 +207,9 @@ export default function StudentProjectsPage() {
       if (editingProjectId === project.id) {
         cancelForm()
       }
+      if (selectedProject?.id === project.id) {
+        setSelectedProject(null)
+      }
       setSuccess('Project deleted successfully.')
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to delete project.'))
@@ -183,7 +221,9 @@ export default function StudentProjectsPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <p className="text-slate-600">Loading projects...</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-slate-600">Loading projects...</p>
+        </div>
       </div>
     )
   }
@@ -196,6 +236,9 @@ export default function StudentProjectsPage() {
           <p className="mt-2 text-slate-600">
             Manage portfolio projects that demonstrate your skills.
           </p>
+          {!needsProfile && (
+            <p className="mt-1 text-sm text-slate-500">{projectCountLabel(projects.length)}</p>
+          )}
         </div>
         {!needsProfile && (
           <button
@@ -231,7 +274,7 @@ export default function StudentProjectsPage() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-4 rounded-xl border border-slate-200 bg-white p-6"
+          className="mt-8 space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
           <h2 className="text-lg font-semibold text-slate-900">
             {editingProjectId ? 'Edit project' : 'New project'}
@@ -257,7 +300,7 @@ export default function StudentProjectsPage() {
             <textarea
               id="description"
               name="description"
-              rows={3}
+              rows={4}
               value={form.description}
               onChange={handleChange}
               className={textareaClass}
@@ -266,12 +309,12 @@ export default function StudentProjectsPage() {
 
           <div>
             <label htmlFor="proofSummary" className={labelClass}>
-              Proof summary
+              What this proves
             </label>
             <textarea
               id="proofSummary"
               name="proofSummary"
-              rows={3}
+              rows={4}
               value={form.proofSummary}
               onChange={handleChange}
               placeholder="What this project proves about your skills"
@@ -279,22 +322,37 @@ export default function StudentProjectsPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="techStackText" className={labelClass}>
-              Tech stack
-            </label>
-            <input
-              id="techStackText"
-              name="techStackText"
-              value={form.techStackText}
-              onChange={handleChange}
-              placeholder="React, Spring Boot, PostgreSQL"
-              className={inputClass}
-            />
-            <p className="mt-1 text-xs text-slate-500">Separate technologies with commas.</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="techStackText" className={labelClass}>
+                Tech stack
+              </label>
+              <input
+                id="techStackText"
+                name="techStackText"
+                value={form.techStackText}
+                onChange={handleChange}
+                placeholder="Java, Spring Boot, PostgreSQL"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-slate-500">Separate technologies with commas.</p>
+            </div>
+            <div>
+              <label htmlFor="imageUrl" className={labelClass}>
+                Image URL
+              </label>
+              <input
+                id="imageUrl"
+                name="imageUrl"
+                type="url"
+                value={form.imageUrl}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="githubUrl" className={labelClass}>
                 GitHub URL
@@ -323,7 +381,7 @@ export default function StudentProjectsPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="projectType" className={labelClass}>
                 Project type
@@ -333,7 +391,7 @@ export default function StudentProjectsPage() {
                 name="projectType"
                 value={form.projectType}
                 onChange={handleChange}
-                placeholder="Web app, API, Mobile"
+                placeholder="Web Application, API, Mobile"
                 className={inputClass}
               />
             </div>
@@ -346,27 +404,13 @@ export default function StudentProjectsPage() {
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                placeholder="Completed, In progress"
+                placeholder="In Progress, Completed"
                 className={inputClass}
               />
             </div>
           </div>
 
-          <div>
-            <label htmlFor="imageUrl" className={labelClass}>
-              Image URL
-            </label>
-            <input
-              id="imageUrl"
-              name="imageUrl"
-              type="url"
-              value={form.imageUrl}
-              onChange={handleChange}
-              className={inputClass}
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 pt-2">
             <button
               type="submit"
               disabled={submitting}
@@ -375,7 +419,7 @@ export default function StudentProjectsPage() {
               {submitting
                 ? 'Saving...'
                 : editingProjectId
-                  ? 'Update project'
+                  ? 'Save changes'
                   : 'Create project'}
             </button>
             <button
@@ -390,31 +434,43 @@ export default function StudentProjectsPage() {
       )}
 
       {!needsProfile && projects.length === 0 && !showForm && (
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-          <p className="text-slate-600">You have not added any projects yet.</p>
+        <div className="mx-auto mt-10 max-w-lg rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <h2 className="text-xl font-semibold text-slate-900">No projects yet</h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            Add your first proof-of-work project to start building your portfolio.
+          </p>
           <button
             type="button"
             onClick={openCreateForm}
-            className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-6 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
-            Add your first project
+            Add project
           </button>
         </div>
       )}
 
       {projects.length > 0 && (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onEdit={openEditForm}
-              onDelete={handleDelete}
-              deleting={deletingId === project.id}
-            />
-          ))}
+        <div className="mx-auto mt-8 w-full max-w-6xl">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onEdit={openEditForm}
+                onDelete={handleDelete}
+                onViewDetails={openViewDetails}
+                deleting={deletingId === project.id}
+              />
+            ))}
+          </div>
         </div>
       )}
+
+      <ProjectDetailsModal
+        project={selectedProject}
+        onClose={closeViewDetails}
+        onEdit={handleEditFromModal}
+      />
     </div>
   )
 }
