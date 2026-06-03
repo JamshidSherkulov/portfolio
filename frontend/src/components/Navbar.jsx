@@ -159,6 +159,9 @@ export default function Navbar() {
               <NavLink to="/employer/candidates" className={linkClass}>
                 Candidates
               </NavLink>
+              <NavLink to="/employer/saved-candidates" className={linkClass}>
+                Saved
+              </NavLink>
             </>
           )}
 

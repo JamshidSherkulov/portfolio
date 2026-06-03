@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCandidateById, getCandidates } from '../api/candidates'
 import CandidateCard from '../components/CandidateCard'
 import CandidateDetailModal from '../components/CandidateDetailModal'
+import { useSavedCandidates } from '../hooks/useSavedCandidates'
 import { getApiErrorMessage } from '../utils/apiError'
 import { inputClass, labelClass } from '../utils/formHelpers'
 
@@ -23,6 +24,14 @@ export default function EmployerCandidatesPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
   const [candidateDetail, setCandidateDetail] = useState(null)
+
+  const {
+    loading: savedLoading,
+    error: savedError,
+    isSaved,
+    toggleSave,
+    pendingId,
+  } = useSavedCandidates()
 
   async function fetchCandidates(activeFilters = filters, isInitial = false) {
     if (isInitial) {
@@ -104,7 +113,15 @@ export default function EmployerCandidatesPage() {
     setCandidateDetail(null)
   }
 
-  if (loading) {
+  async function handleToggleSave(studentProfileId) {
+    try {
+      await toggleSave(studentProfileId)
+    } catch {
+      // Error is surfaced via savedError from the hook.
+    }
+  }
+
+  if (loading || savedLoading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -223,6 +240,12 @@ export default function EmployerCandidatesPage() {
         </p>
       )}
 
+      {savedError && (
+        <p className="mt-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {savedError}
+        </p>
+      )}
+
       {!error && candidates.length === 0 && (
         <div className="mx-auto mt-10 max-w-lg rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">No candidates found</h2>
@@ -251,6 +274,9 @@ export default function EmployerCandidatesPage() {
                 key={candidate.id}
                 candidate={candidate}
                 onViewProfile={handleViewProfile}
+                isSaved={isSaved(candidate.id)}
+                onToggleSave={handleToggleSave}
+                saveLoading={pendingId === candidate.id}
               />
             ))}
           </div>
@@ -263,6 +289,9 @@ export default function EmployerCandidatesPage() {
         error={detailError}
         candidate={candidateDetail}
         onClose={closeModal}
+        isSaved={candidateDetail ? isSaved(candidateDetail.id) : false}
+        onToggleSave={candidateDetail ? handleToggleSave : undefined}
+        saveLoading={candidateDetail ? pendingId === candidateDetail.id : false}
       />
     </div>
   )

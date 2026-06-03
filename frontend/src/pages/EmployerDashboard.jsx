@@ -4,6 +4,7 @@ import { getCandidateById, getCandidates } from '../api/candidates'
 import { getMyEmployerProfile } from '../api/employers'
 import CandidateCard from '../components/CandidateCard'
 import CandidateDetailModal from '../components/CandidateDetailModal'
+import { useSavedCandidates } from '../hooks/useSavedCandidates'
 import { getApiErrorMessage } from '../utils/apiError'
 import { calculateSummaryProfileStrength } from '../utils/candidateHelpers'
 import { calculateEmployerProfileCompletion } from '../utils/employerHelpers'
@@ -97,6 +98,13 @@ export default function EmployerDashboard() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
   const [candidateDetail, setCandidateDetail] = useState(null)
+
+  const {
+    savedCount,
+    isSaved,
+    toggleSave,
+    pendingId,
+  } = useSavedCandidates()
 
   useEffect(() => {
     let cancelled = false
@@ -193,6 +201,14 @@ export default function EmployerDashboard() {
     setCandidateDetail(null)
   }
 
+  async function handleToggleSave(studentProfileId) {
+    try {
+      await toggleSave(studentProfileId)
+    } catch {
+      // Saved candidate errors are handled by the hook on other pages.
+    }
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -230,7 +246,7 @@ export default function EmployerDashboard() {
       {/* Section 2: Stats */}
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-slate-900">Overview</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <StatCard
             label="Candidates Available"
             value={stats.candidatesAvailable}
@@ -272,6 +288,15 @@ export default function EmployerDashboard() {
                   d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
                   clipRule="evenodd"
                 />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Saved Candidates"
+            value={savedCount}
+            icon={
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
               </svg>
             }
           />
@@ -342,7 +367,7 @@ export default function EmployerDashboard() {
           <QuickActionCard
             title="Saved Candidates"
             description="Keep track of promising talent for future roles."
-            comingSoon
+            to="/employer/saved-candidates"
             icon={
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
@@ -386,6 +411,9 @@ export default function EmployerDashboard() {
                 key={candidate.id}
                 candidate={candidate}
                 onViewProfile={handleViewProfile}
+                isSaved={isSaved(candidate.id)}
+                onToggleSave={handleToggleSave}
+                saveLoading={pendingId === candidate.id}
               />
             ))}
           </div>
@@ -448,6 +476,9 @@ export default function EmployerDashboard() {
         error={detailError}
         candidate={candidateDetail}
         onClose={closeModal}
+        isSaved={candidateDetail ? isSaved(candidateDetail.id) : false}
+        onToggleSave={candidateDetail ? handleToggleSave : undefined}
+        saveLoading={candidateDetail ? pendingId === candidateDetail.id : false}
       />
     </div>
   )

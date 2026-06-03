@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import EmployerCandidatesPage from './pages/EmployerCandidatesPage'
 import EmployerDashboard from './pages/EmployerDashboard'
 import EmployerProfilePage from './pages/EmployerProfilePage'
+import SavedCandidatesPage from './pages/SavedCandidatesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -70,6 +71,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['EMPLOYER']}>
                     <EmployerCandidatesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/employer/saved-candidates"
+                element={
+                  <ProtectedRoute allowedRoles={['EMPLOYER']}>
+                    <SavedCandidatesPage />
                   </ProtectedRoute>
                 }
               />

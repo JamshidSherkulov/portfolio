@@ -1,3 +1,4 @@
+import SaveCandidateButton from './SaveCandidateButton'
 import {
   calculateSummaryProfileStrength,
   formatCandidateName,
@@ -33,7 +34,13 @@ function CandidateAvatar({ candidate }) {
   )
 }
 
-export default function CandidateCard({ candidate, onViewProfile }) {
+export default function CandidateCard({
+  candidate,
+  onViewProfile,
+  isSaved = false,
+  onToggleSave,
+  saveLoading = false,
+}) {
   const skills = Array.isArray(candidate.skills) ? candidate.skills : []
   const visibleSkills = skills.slice(0, MAX_VISIBLE_SKILLS)
   const hiddenCount = skills.length - visibleSkills.length
@@ -95,13 +102,23 @@ export default function CandidateCard({ candidate, onViewProfile }) {
 
       <ProfileStrengthBar strength={strength} />
 
-      <button
-        type="button"
-        onClick={() => onViewProfile(candidate.id)}
-        className="mt-5 w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-      >
-        View profile
-      </button>
+      <div className="mt-5 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => onViewProfile(candidate.id)}
+          className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+        >
+          View profile
+        </button>
+        {onToggleSave && (
+          <SaveCandidateButton
+            isSaved={isSaved}
+            onToggle={() => onToggleSave(candidate.id)}
+            loading={saveLoading}
+            className="w-full"
+          />
+        )}
+      </div>
     </article>
   )
 }
