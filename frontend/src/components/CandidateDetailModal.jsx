@@ -33,26 +33,19 @@ function StatusBadge({ status }) {
 
 function ProfileStrengthBar({ strength }) {
   return (
-    <div className="mt-3 max-w-xs">
+    <div className="mt-4">
       <div className="flex items-center justify-between text-xs">
         <span className="font-medium text-slate-600">Profile strength</span>
         <span className="font-semibold text-indigo-600">{strength}%</span>
       </div>
       <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div
-          className="h-full rounded-full bg-indigo-600 transition-all"
-          style={{ width: `${strength}%` }}
-        />
+        <div className="h-full rounded-full bg-indigo-600" style={{ width: `${strength}%` }} />
       </div>
     </div>
   )
 }
 
 function Section({ title, children }) {
-  if (!children) {
-    return null
-  }
-
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5">
       <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
@@ -61,37 +54,49 @@ function Section({ title, children }) {
   )
 }
 
-function CandidateAvatar({ candidate, size = 'lg' }) {
-  const sizeClass = size === 'lg' ? 'h-20 w-20 text-xl' : 'h-12 w-12 text-sm'
+function EmptyText({ children }) {
+  return <p className="text-sm text-slate-500">{children}</p>
+}
 
+function DetailRow({ label, value }) {
+  if (!value?.trim()) {
+    return null
+  }
+
+  return (
+    <p className="text-sm text-slate-600">
+      <span className="font-medium text-slate-700">{label}:</span> {value}
+    </p>
+  )
+}
+
+function CandidateAvatar({ candidate }) {
   if (candidate?.profileImageUrl?.trim()) {
     return (
       <img
         src={candidate.profileImageUrl}
         alt={formatCandidateName(candidate)}
-        className={`${sizeClass} rounded-full border border-slate-200 object-cover`}
+        className="h-24 w-24 shrink-0 rounded-full border border-slate-200 object-cover"
       />
     )
   }
 
   return (
-    <div
-      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700`}
-    >
+    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-2xl font-bold text-indigo-700">
       {getCandidateInitials(candidate)}
     </div>
   )
 }
 
-function ProjectItem({ project }) {
+function ProjectCard({ project }) {
   const techStack = Array.isArray(project.techStack) ? project.techStack : []
   const showGithub = Boolean(project.githubUrl?.trim())
   const showDemo = isDemoAvailable(project.liveDemoUrl)
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <article className="h-full rounded-xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h5 className="font-semibold text-slate-900">{project.title}</h5>
+        <h5 className="font-semibold leading-snug text-slate-900">{project.title}</h5>
         <StatusBadge status={project.status} />
       </div>
 
@@ -99,20 +104,24 @@ function ProjectItem({ project }) {
         <p className="mt-1 text-xs font-medium text-slate-500">{project.projectType}</p>
       )}
 
-      {project.description?.trim() && (
+      {project.description?.trim() ? (
         <p className="mt-3 text-sm leading-relaxed text-slate-600">{project.description}</p>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">No description added.</p>
       )}
 
-      {project.proofSummary?.trim() && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            What this project proves
-          </p>
+      <div className="mt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          What this project proves
+        </p>
+        {project.proofSummary?.trim() ? (
           <p className="mt-1 text-sm leading-relaxed text-slate-600">{project.proofSummary}</p>
-        </div>
-      )}
+        ) : (
+          <p className="mt-1 text-sm text-slate-500">No proof summary added.</p>
+        )}
+      </div>
 
-      {techStack.length > 0 && (
+      {techStack.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {techStack.map((tech, index) => (
             <span
@@ -123,6 +132,8 @@ function ProjectItem({ project }) {
             </span>
           ))}
         </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">No tech stack listed.</p>
       )}
 
       {(showGithub || showDemo) && (
@@ -162,14 +173,15 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
   const projects = Array.isArray(candidate?.projects) ? candidate.projects : []
   const strength = calculateDetailProfileStrength(candidate)
 
-  const educationParts = [candidate?.university, candidate?.degree, candidate?.graduationYear].filter(
-    (part) => part?.trim(),
-  )
-
   const hasLinks =
     candidate?.githubUrl?.trim() ||
     candidate?.linkedinUrl?.trim() ||
     candidate?.portfolioUrl?.trim()
+
+  const hasEducation =
+    candidate?.university?.trim() ||
+    candidate?.degree?.trim() ||
+    candidate?.graduationYear?.trim()
 
   return (
     <div
@@ -185,9 +197,9 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
         aria-label="Close modal"
       />
 
-      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-xl">
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-4">
-          <h2 id="candidate-detail-title" className="text-xl font-bold text-slate-900">
+      <div className="relative max-h-[92vh] w-full max-w-[900px] overflow-y-auto rounded-xl bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 py-4">
+          <h2 id="candidate-detail-title" className="text-lg font-bold text-slate-900">
             Candidate profile
           </h2>
           <button
@@ -202,9 +214,9 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
           </button>
         </div>
 
-        <div className="space-y-4 bg-slate-50 px-6 py-6">
+        <div className="space-y-4 bg-slate-50 px-4 py-6 sm:px-6">
           {loading && (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+            <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
               <p className="text-slate-600">Loading candidate profile...</p>
             </div>
           )}
@@ -218,47 +230,56 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
           {!loading && !error && candidate && (
             <>
               <div className="rounded-xl border border-slate-200 bg-white p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                   <CandidateAvatar candidate={candidate} />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-2xl font-bold text-slate-900">
                       {formatCandidateName(candidate)}
                     </h3>
-                    {candidate.headline?.trim() && (
+                    {candidate.headline?.trim() ? (
                       <p className="mt-1 text-sm font-medium text-indigo-600">
                         {candidate.headline}
                       </p>
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-500">No headline added.</p>
                     )}
-                    <div className="mt-2 space-y-1 text-sm text-slate-600">
-                      {candidate.location?.trim() && <p>{candidate.location}</p>}
-                      {candidate.availability?.trim() && (
-                        <p>
-                          <span className="text-slate-500">Availability:</span>{' '}
-                          {candidate.availability}
-                        </p>
-                      )}
+
+                    <div className="mt-3 space-y-1 text-sm text-slate-600">
+                      <DetailRow label="Location" value={candidate.location} />
+                      <DetailRow label="Preferred role" value={candidate.preferredRole} />
+                      <DetailRow label="Experience level" value={candidate.experienceLevel} />
+                      <DetailRow label="Availability" value={candidate.availability} />
                     </div>
+
                     <ProfileStrengthBar strength={strength} />
                   </div>
                 </div>
               </div>
 
-              {candidate.bio?.trim() && (
-                <Section title="About">
+              <Section title="About">
+                {candidate.bio?.trim() ? (
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                     {candidate.bio}
                   </p>
-                </Section>
-              )}
+                ) : (
+                  <EmptyText>No bio added yet.</EmptyText>
+                )}
+              </Section>
 
-              {educationParts.length > 0 && (
-                <Section title="Education">
-                  <p className="text-sm text-slate-600">{educationParts.join(' · ')}</p>
-                </Section>
-              )}
+              <Section title="Education">
+                {hasEducation ? (
+                  <div className="space-y-1">
+                    <DetailRow label="University" value={candidate.university} />
+                    <DetailRow label="Degree" value={candidate.degree} />
+                    <DetailRow label="Graduation year" value={candidate.graduationYear} />
+                  </div>
+                ) : (
+                  <EmptyText>No education added yet.</EmptyText>
+                )}
+              </Section>
 
-              {skills.length > 0 && (
-                <Section title="Skills">
+              <Section title="Skills">
+                {skills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill, index) => (
                       <span
@@ -269,11 +290,13 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
                       </span>
                     ))}
                   </div>
-                </Section>
-              )}
+                ) : (
+                  <EmptyText>No skills added yet.</EmptyText>
+                )}
+              </Section>
 
-              {hasLinks && (
-                <Section title="Links">
+              <Section title="Links">
+                {hasLinks ? (
                   <div className="flex flex-wrap gap-3">
                     {candidate.githubUrl?.trim() && (
                       <a
@@ -306,25 +329,36 @@ export default function CandidateDetailModal({ open, loading, error, candidate, 
                       </a>
                     )}
                   </div>
-                </Section>
-              )}
+                ) : (
+                  <EmptyText>No links added yet.</EmptyText>
+                )}
+              </Section>
 
               <Section title="Projects">
-                {projects.length === 0 ? (
-                  <p className="text-sm text-slate-500">No projects listed.</p>
-                ) : (
-                  <div className="space-y-4">
+                {projects.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {projects.map((project) => (
-                      <ProjectItem key={project.id} project={project} />
+                      <ProjectCard key={project.id} project={project} />
                     ))}
                   </div>
+                ) : (
+                  <EmptyText>No projects added yet.</EmptyText>
                 )}
               </Section>
             </>
           )}
         </div>
 
-        <div className="flex justify-end border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
+          <button
+            type="button"
+            disabled
+            title="Coming soon"
+            className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-400"
+          >
+            Contact candidate
+            <span className="ml-2 text-xs font-normal">(Coming soon)</span>
+          </button>
           <button
             type="button"
             onClick={onClose}

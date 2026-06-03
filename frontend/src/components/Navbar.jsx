@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { getMyEmployerProfile } from '../api/employers'
 import { getMyStudentProfile } from '../api/students'
 import { useAuth } from '../auth/AuthContext'
+import { getEmployerCompanyName } from '../utils/employerHelpers'
 import { isNotFoundError } from '../utils/formHelpers'
 
 const linkClass = ({ isActive }) =>
@@ -27,12 +29,14 @@ function getStudentDisplayName(profile, email) {
 export default function Navbar() {
   const { isAuthenticated, role, email, logout } = useAuth()
   const [studentProfile, setStudentProfile] = useState(null)
-  const [profileLoaded, setProfileLoaded] = useState(false)
+  const [employerProfile, setEmployerProfile] = useState(null)
+  const [studentProfileLoaded, setStudentProfileLoaded] = useState(false)
+  const [employerProfileLoaded, setEmployerProfileLoaded] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated || role !== 'STUDENT') {
       setStudentProfile(null)
-      setProfileLoaded(false)
+      setStudentProfileLoaded(false)
       return undefined
     }
 
@@ -50,7 +54,7 @@ export default function Navbar() {
         }
       } finally {
         if (!cancelled) {
-          setProfileLoaded(true)
+          setStudentProfileLoaded(true)
         }
       }
     }
@@ -62,10 +66,51 @@ export default function Navbar() {
     }
   }, [isAuthenticated, role])
 
-  const displayName =
-    role === 'STUDENT' && profileLoaded
-      ? getStudentDisplayName(studentProfile, email)
-      : email
+  useEffect(() => {
+    if (!isAuthenticated || role !== 'EMPLOYER') {
+      setEmployerProfile(null)
+      setEmployerProfileLoaded(false)
+      return undefined
+    }
+
+    let cancelled = false
+
+    async function loadEmployerProfile() {
+      try {
+        const profile = await getMyEmployerProfile()
+        if (!cancelled) {
+          setEmployerProfile(profile)
+        }
+      } catch (err) {
+        if (err.response?.status !== 404 && !cancelled) {
+          setEmployerProfile(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setEmployerProfileLoaded(true)
+        }
+      }
+    }
+
+    loadEmployerProfile()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, role])
+
+  let userLabel = null
+
+  if (isAuthenticated && role === 'STUDENT') {
+    userLabel =
+      studentProfileLoaded ? getStudentDisplayName(studentProfile, email) : email
+  }
+
+  if (isAuthenticated && role === 'EMPLOYER') {
+    userLabel = employerProfileLoaded
+      ? getEmployerCompanyName(employerProfile)
+      : 'My Company'
+  }
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -119,9 +164,9 @@ export default function Navbar() {
 
           {isAuthenticated && (
             <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
-              {displayName && (
+              {userLabel && (
                 <span className="hidden text-sm font-medium text-slate-700 sm:inline">
-                  {displayName}
+                  {role === 'EMPLOYER' ? `\uD83C\uDFE2 ${userLabel}` : userLabel}
                 </span>
               )}
               <button
