@@ -6,7 +6,7 @@ import CandidateCard from '../components/CandidateCard'
 import CandidateDetailModal from '../components/CandidateDetailModal'
 import { useSavedCandidates } from '../hooks/useSavedCandidates'
 import { getApiErrorMessage } from '../utils/apiError'
-import { calculateSummaryProfileStrength } from '../utils/candidateHelpers'
+import { calculateProfileStrength } from '../utils/profileStrength'
 import { calculateEmployerProfileCompletion } from '../utils/employerHelpers'
 
 function StatCard({ label, value, icon }) {
@@ -61,7 +61,7 @@ function computeDashboardStats(candidates) {
   const list = Array.isArray(candidates) ? candidates : []
 
   const studentProfiles = list.filter(
-    (candidate) => calculateSummaryProfileStrength(candidate) === 100,
+    (candidate) => calculateProfileStrength(candidate).score === 100,
   ).length
 
   const projectsSubmitted = list.reduce(
@@ -302,8 +302,7 @@ export default function EmployerDashboard() {
           />
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Student Profiles counts candidates with 100% profile strength based on available summary
-          data.
+          Student Profiles counts candidates with a fully complete profile (100% strength).
         </p>
       </section>
 

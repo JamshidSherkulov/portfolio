@@ -9,8 +9,17 @@ public record CandidateSummaryResponse(
         String lastName,
         String headline,
         String location,
+        String bio,
+        String university,
+        String degree,
+        String graduationYear,
         String preferredRole,
         String experienceLevel,
+        String availability,
+        String githubUrl,
+        String linkedinUrl,
+        String portfolioUrl,
+        String profileImageUrl,
         List<String> skills,
         long projectCount
 ) {

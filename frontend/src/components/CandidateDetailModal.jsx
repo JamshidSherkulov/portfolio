@@ -1,9 +1,10 @@
 import SaveCandidateButton from './SaveCandidateButton'
+import CandidateAvatar from './CandidateAvatar'
+import ProfileStrengthSection from './ProfileStrengthSection'
 import {
-  calculateDetailProfileStrength,
-  formatCandidateName,
-  getCandidateInitials,
-} from '../utils/candidateHelpers'
+  calculateProfileStrength,
+} from '../utils/profileStrength'
+import { formatCandidateName } from '../utils/candidateHelpers'
 
 function isDemoAvailable(url) {
   if (!url?.trim()) {
@@ -32,20 +33,6 @@ function StatusBadge({ status }) {
   )
 }
 
-function ProfileStrengthBar({ strength }) {
-  return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-slate-600">Profile strength</span>
-        <span className="font-semibold text-indigo-600">{strength}%</span>
-      </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full bg-indigo-600" style={{ width: `${strength}%` }} />
-      </div>
-    </div>
-  )
-}
-
 function Section({ title, children }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5">
@@ -68,24 +55,6 @@ function DetailRow({ label, value }) {
     <p className="text-sm text-slate-600">
       <span className="font-medium text-slate-700">{label}:</span> {value}
     </p>
-  )
-}
-
-function CandidateAvatar({ candidate }) {
-  if (candidate?.profileImageUrl?.trim()) {
-    return (
-      <img
-        src={candidate.profileImageUrl}
-        alt={formatCandidateName(candidate)}
-        className="h-24 w-24 shrink-0 rounded-full border border-slate-200 object-cover"
-      />
-    )
-  }
-
-  return (
-    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-2xl font-bold text-indigo-700">
-      {getCandidateInitials(candidate)}
-    </div>
   )
 }
 
@@ -181,7 +150,7 @@ export default function CandidateDetailModal({
 
   const skills = Array.isArray(candidate?.skills) ? candidate.skills : []
   const projects = Array.isArray(candidate?.projects) ? candidate.projects : []
-  const strength = calculateDetailProfileStrength(candidate)
+  const { score, missingItems } = calculateProfileStrength(candidate)
 
   const hasLinks =
     candidate?.githubUrl?.trim() ||
@@ -251,7 +220,7 @@ export default function CandidateDetailModal({
             <>
               <div className="rounded-xl border border-slate-200 bg-white p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <CandidateAvatar candidate={candidate} />
+                  <CandidateAvatar candidate={candidate} size="lg" />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-2xl font-bold text-slate-900">
                       {formatCandidateName(candidate)}
@@ -271,7 +240,11 @@ export default function CandidateDetailModal({
                       <DetailRow label="Availability" value={candidate.availability} />
                     </div>
 
-                    <ProfileStrengthBar strength={strength} />
+                    <ProfileStrengthSection
+                      score={score}
+                      missingItems={missingItems}
+                      barHeightClass="h-2"
+                    />
                   </div>
                 </div>
               </div>

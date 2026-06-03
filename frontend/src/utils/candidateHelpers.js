@@ -1,3 +1,48 @@
+export function isValidImageUrl(url) {
+  if (!url?.trim()) {
+    return false
+  }
+
+  const trimmed = url.trim()
+  const placeholderValues = new Set([
+    'your university',
+    'coming soon',
+    'n/a',
+    'test',
+    'placeholder',
+  ])
+
+  if (placeholderValues.has(trimmed.toLowerCase())) {
+    return false
+  }
+
+  try {
+    const parsed = new URL(trimmed)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false
+    }
+
+    const pathname = parsed.pathname.toLowerCase()
+    if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i.test(pathname)) {
+      return true
+    }
+
+    const trustedImageHosts = [
+      'avatars.githubusercontent.com',
+      'lh3.googleusercontent.com',
+      'media.licdn.com',
+      'platform-lookaside.fbsbx.com',
+    ]
+
+    const hostname = parsed.hostname.toLowerCase()
+    return trustedImageHosts.some(
+      (host) => hostname === host || hostname.endsWith(`.${host}`),
+    )
+  } catch {
+    return false
+  }
+}
+
 export function formatCandidateName(candidate) {
   if (!candidate) {
     return 'Unnamed candidate'
@@ -14,43 +59,4 @@ export function getCandidateInitials(candidate) {
   const last = candidate.lastName?.trim()?.[0] ?? ''
   const initials = `${first}${last}`.toUpperCase()
   return initials || '?'
-}
-
-export function calculateSummaryProfileStrength(candidate) {
-  if (!candidate) {
-    return 0
-  }
-
-  const skills = Array.isArray(candidate.skills) ? candidate.skills : []
-  const checks = [
-    Boolean(candidate.firstName?.trim() && candidate.lastName?.trim()),
-    Boolean(candidate.headline?.trim()),
-    Boolean(candidate.location?.trim()),
-    Boolean(candidate.preferredRole?.trim()),
-    Boolean(candidate.experienceLevel?.trim()),
-    skills.length >= 3,
-    (candidate.projectCount ?? 0) >= 1,
-  ]
-
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
-}
-
-export function calculateDetailProfileStrength(candidate) {
-  if (!candidate) {
-    return 0
-  }
-
-  const skills = Array.isArray(candidate.skills) ? candidate.skills : []
-  const projects = Array.isArray(candidate.projects) ? candidate.projects : []
-  const checks = [
-    Boolean(candidate.firstName?.trim() && candidate.lastName?.trim()),
-    Boolean(candidate.headline?.trim()),
-    Boolean(candidate.location?.trim()),
-    Boolean(candidate.preferredRole?.trim()),
-    Boolean(candidate.experienceLevel?.trim()),
-    skills.length >= 3,
-    projects.length >= 1,
-  ]
-
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
 }

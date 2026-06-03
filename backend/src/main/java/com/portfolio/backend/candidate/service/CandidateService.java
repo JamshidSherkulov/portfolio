@@ -105,8 +105,17 @@ public class CandidateService {
                 profile.getLastName(),
                 profile.getHeadline(),
                 profile.getLocation(),
+                profile.getBio(),
+                profile.getUniversity(),
+                profile.getDegree(),
+                profile.getGraduationYear(),
                 profile.getPreferredRole(),
                 profile.getExperienceLevel(),
+                profile.getAvailability(),
+                profile.getGithubUrl(),
+                profile.getLinkedinUrl(),
+                profile.getPortfolioUrl(),
+                profile.getProfileImageUrl(),
                 profile.getSkills(),
                 projectCount
         );
