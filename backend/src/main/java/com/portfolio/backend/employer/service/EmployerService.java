@@ -1,5 +1,6 @@
 package com.portfolio.backend.employer.service;
 
+import com.portfolio.backend.common.exception.ResourceNotFoundException;
 import com.portfolio.backend.employer.dto.EmployerProfileRequest;
 import com.portfolio.backend.employer.dto.EmployerProfileResponse;
 import com.portfolio.backend.employer.entity.EmployerProfile;
@@ -54,7 +55,7 @@ public class EmployerService {
         User user = getUserByEmail(email);
 
         EmployerProfile profile = employerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Employer profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
 
         return EmployerMapper.toResponse(profile);
     }
@@ -94,7 +95,7 @@ public class EmployerService {
 
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email.toLowerCase().trim())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
     }
 
     private String clean(String value) {

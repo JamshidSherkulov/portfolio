@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   createMyEmployerProfile,
   getMyEmployerProfile,
   updateMyEmployerProfile,
 } from '../api/employers'
 import { getApiErrorMessage } from '../utils/apiError'
-import {
-  inputClass,
-  isNotFoundError,
-  labelClass,
-  textareaClass,
-} from '../utils/formHelpers'
+import { inputClass, labelClass, textareaClass } from '../utils/formHelpers'
 
 const emptyForm = {
   companyName: '',
@@ -49,7 +43,7 @@ function formToPayload(form) {
 
 export default function EmployerProfilePage() {
   const [form, setForm] = useState(emptyForm)
-  const [hasProfile, setHasProfile] = useState(false)
+  const [profileExists, setProfileExists] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -60,11 +54,16 @@ export default function EmployerProfilePage() {
       try {
         const profile = await getMyEmployerProfile()
         setForm(profileToForm(profile))
-        setHasProfile(true)
+        setProfileExists(true)
       } catch (err) {
-        if (!isNotFoundError(err)) {
-          setError(getApiErrorMessage(err, 'Failed to load company profile.'))
+        if (err.response?.status === 404) {
+          setForm(emptyForm)
+          setProfileExists(false)
+          setError('')
+          return
         }
+
+        setError(getApiErrorMessage(err, 'Failed to load company profile.'))
       } finally {
         setLoading(false)
       }
@@ -90,18 +89,18 @@ export default function EmployerProfilePage() {
 
     setSubmitting(true)
 
-    const isUpdate = hasProfile
-
     try {
       const payload = formToPayload(form)
-      const profile = isUpdate
+      const profile = profileExists
         ? await updateMyEmployerProfile(payload)
         : await createMyEmployerProfile(payload)
 
       setForm(profileToForm(profile))
-      setHasProfile(true)
+      setProfileExists(true)
       setSuccess(
-        isUpdate ? 'Company profile updated successfully.' : 'Company profile created successfully.',
+        profileExists
+          ? 'Company profile updated successfully.'
+          : 'Company profile created successfully.',
       )
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to save company profile.'))
@@ -122,7 +121,7 @@ export default function EmployerProfilePage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-slate-900">Company profile</h1>
       <p className="mt-2 text-slate-600">
-        {hasProfile
+        {profileExists
           ? 'Update your company details so candidates know who you are.'
           : 'Set up your company profile to start discovering junior developer talent.'}
       </p>
@@ -244,7 +243,7 @@ export default function EmployerProfilePage() {
         >
           {submitting
             ? 'Saving...'
-            : hasProfile
+            : profileExists
               ? 'Save company profile'
               : 'Create company profile'}
         </button>
