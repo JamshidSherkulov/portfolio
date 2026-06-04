@@ -1,8 +1,10 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
+import { ToastProvider } from './context/ToastContext'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import EmployerCandidatesPage from './pages/EmployerCandidatesPage'
+import EmployerContactRequests from './pages/EmployerContactRequests'
 import EmployerDashboard from './pages/EmployerDashboard'
 import EmployerProfilePage from './pages/EmployerProfilePage'
 import SavedCandidatesPage from './pages/SavedCandidatesPage'
@@ -12,15 +14,17 @@ import RegisterPage from './pages/RegisterPage'
 import StudentDashboard from './pages/StudentDashboard'
 import StudentProfilePage from './pages/StudentProfilePage'
 import StudentProjectsPage from './pages/StudentProjectsPage'
+import StudentRequests from './pages/StudentRequests'
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="min-h-screen bg-slate-50">
-          <Navbar />
-          <main>
-            <Routes>
+        <ToastProvider>
+          <div className="min-h-screen bg-slate-50">
+            <Navbar />
+            <main>
+              <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -46,6 +50,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['STUDENT']}>
                     <StudentProjectsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/requests"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <StudentRequests />
                   </ProtectedRoute>
                 }
               />
@@ -82,9 +94,18 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/employer/requests"
+                element={
+                  <ProtectedRoute allowedRoles={['EMPLOYER']}>
+                    <EmployerContactRequests />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </main>
         </div>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   )

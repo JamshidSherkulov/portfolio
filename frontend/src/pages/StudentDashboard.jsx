@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyProjects } from '../api/projects'
 import { getMyStudentProfile } from '../api/students'
+import { getStudentContactRequests } from '../services/contactRequestService'
 import { getApiErrorMessage } from '../utils/apiError'
+import { countByStatus } from '../utils/contactRequestHelpers'
 import { isNotFoundError } from '../utils/formHelpers'
 
 const COMPLETION_FIELDS = [
@@ -88,6 +90,24 @@ function StatusBadge({ status }) {
     >
       {status.trim()}
     </span>
+  )
+}
+
+function EmployerRequestsCard({ pending, accepted }) {
+  return (
+    <Link
+      to="/student/requests"
+      className="flex h-full min-h-[140px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+    >
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 13h12a1 1 0 00.707-1.707L16 10.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+        </svg>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-500">Employer Requests</p>
+      <p className="mt-1 text-xl font-bold text-slate-900">{pending} Pending</p>
+      <p className="mt-1 text-sm text-slate-600">{accepted} Accepted</p>
+    </Link>
   )
 }
 
@@ -205,6 +225,7 @@ export default function StudentDashboard() {
   const [profile, setProfile] = useState(null)
   const [projects, setProjects] = useState([])
   const [hasProfile, setHasProfile] = useState(false)
+  const [requestCounts, setRequestCounts] = useState({ PENDING: 0, ACCEPTED: 0, REJECTED: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -221,7 +242,7 @@ export default function StudentDashboard() {
           throw err
         })
 
-        const [profileResult, projectsData] = await Promise.all([
+        const [profileResult, projectsData, requestsData] = await Promise.all([
           getMyStudentProfile().catch((err) => {
             if (isNotFoundError(err)) {
               return null
@@ -229,6 +250,7 @@ export default function StudentDashboard() {
             throw err
           }),
           projectsPromise,
+          getStudentContactRequests().catch(() => []),
         ])
 
         if (profileResult) {
@@ -237,6 +259,7 @@ export default function StudentDashboard() {
         }
 
         setProjects(Array.isArray(projectsData) ? projectsData : [])
+        setRequestCounts(countByStatus(Array.isArray(requestsData) ? requestsData : []))
       } catch (err) {
         setError(getApiErrorMessage(err, 'Failed to load dashboard data.'))
       } finally {
@@ -299,8 +322,12 @@ export default function StudentDashboard() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <ProfileCompletionCard completion={completion} hasProfile={hasProfile} />
+            <EmployerRequestsCard
+              pending={requestCounts.PENDING}
+              accepted={requestCounts.ACCEPTED}
+            />
             <StatCard
               label="Total projects"
               value={projects.length}
@@ -357,6 +384,12 @@ export default function StudentDashboard() {
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               View projects
+            </Link>
+            <Link
+              to="/student/requests"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              View requests
             </Link>
             <button
               type="button"

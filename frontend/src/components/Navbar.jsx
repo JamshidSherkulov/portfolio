@@ -5,6 +5,8 @@ import { getMyStudentProfile } from '../api/students'
 import { useAuth } from '../auth/AuthContext'
 import { getEmployerCompanyName } from '../utils/employerHelpers'
 import { isNotFoundError } from '../utils/formHelpers'
+import { getStudentContactRequests } from '../services/contactRequestService'
+import { countByStatus } from '../utils/contactRequestHelpers'
 
 const linkClass = ({ isActive }) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -32,6 +34,7 @@ export default function Navbar() {
   const [employerProfile, setEmployerProfile] = useState(null)
   const [studentProfileLoaded, setStudentProfileLoaded] = useState(false)
   const [employerProfileLoaded, setEmployerProfileLoaded] = useState(false)
+  const [pendingRequestCount, setPendingRequestCount] = useState(0)
 
   useEffect(() => {
     if (!isAuthenticated || role !== 'STUDENT') {
@@ -99,6 +102,35 @@ export default function Navbar() {
     }
   }, [isAuthenticated, role])
 
+  useEffect(() => {
+    if (!isAuthenticated || role !== 'STUDENT') {
+      setPendingRequestCount(0)
+      return undefined
+    }
+
+    let cancelled = false
+
+    async function loadPendingCount() {
+      try {
+        const data = await getStudentContactRequests()
+        if (!cancelled) {
+          const counts = countByStatus(Array.isArray(data) ? data : [])
+          setPendingRequestCount(counts.PENDING)
+        }
+      } catch {
+        if (!cancelled) {
+          setPendingRequestCount(0)
+        }
+      }
+    }
+
+    loadPendingCount()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, role])
+
   let userLabel = null
 
   if (isAuthenticated && role === 'STUDENT') {
@@ -145,6 +177,11 @@ export default function Navbar() {
               <NavLink to="/student/projects" className={linkClass}>
                 Projects
               </NavLink>
+              <NavLink to="/student/requests" className={linkClass}>
+                {pendingRequestCount > 0
+                  ? `Requests (${pendingRequestCount})`
+                  : 'Requests'}
+              </NavLink>
             </>
           )}
 
@@ -161,6 +198,9 @@ export default function Navbar() {
               </NavLink>
               <NavLink to="/employer/saved-candidates" className={linkClass}>
                 Saved
+              </NavLink>
+              <NavLink to="/employer/requests" className={linkClass}>
+                Requests
               </NavLink>
             </>
           )}

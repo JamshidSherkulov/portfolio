@@ -1,10 +1,15 @@
+import { useEffect, useState } from 'react'
 import SaveCandidateButton from './SaveCandidateButton'
 import CandidateAvatar from './CandidateAvatar'
+import ContactCandidateModal from './ContactCandidateModal'
+import ContactRequestStatusBadge from './ContactRequestStatusBadge'
 import ProfileStrengthSection from './ProfileStrengthSection'
 import {
   calculateProfileStrength,
 } from '../utils/profileStrength'
 import { formatCandidateName } from '../utils/candidateHelpers'
+import { getEmployerContactRequests } from '../services/contactRequestService'
+import { getContactRequestForStudent } from '../utils/contactRequestHelpers'
 
 function isDemoAvailable(url) {
   if (!url?.trim()) {
@@ -144,9 +149,61 @@ export default function CandidateDetailModal({
   onToggleSave,
   saveLoading = false,
 }) {
+  const [employerRequests, setEmployerRequests] = useState([])
+  const [requestsLoading, setRequestsLoading] = useState(false)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open || !candidate?.id) {
+      setEmployerRequests([])
+      return undefined
+    }
+
+    let cancelled = false
+
+    async function loadEmployerRequests() {
+      setRequestsLoading(true)
+
+      try {
+        const data = await getEmployerContactRequests()
+        if (!cancelled) {
+          setEmployerRequests(Array.isArray(data) ? data : [])
+        }
+      } catch {
+        if (!cancelled) {
+          setEmployerRequests([])
+        }
+      } finally {
+        if (!cancelled) {
+          setRequestsLoading(false)
+        }
+      }
+    }
+
+    loadEmployerRequests()
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, candidate?.id])
+
+  function handleContactRequestSent(created) {
+    setEmployerRequests((current) => {
+      const without = current.filter(
+        (request) => request.studentProfileId !== created.studentProfileId,
+      )
+      return [created, ...without]
+    })
+  }
+
   if (!open) {
     return null
   }
+
+  const existingContactRequest = candidate
+    ? getContactRequestForStudent(employerRequests, candidate.id)
+    : null
+  const hasExistingRequest = Boolean(existingContactRequest)
 
   const skills = Array.isArray(candidate?.skills) ? candidate.skills : []
   const projects = Array.isArray(candidate?.projects) ? candidate.projects : []
@@ -343,14 +400,18 @@ export default function CandidateDetailModal({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
+          <div className="mr-auto flex flex-wrap items-center gap-2">
+            {existingContactRequest && (
+              <ContactRequestStatusBadge status={existingContactRequest.status} />
+            )}
+          </div>
           <button
             type="button"
-            disabled
-            title="Coming soon"
-            className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-400"
+            onClick={() => setContactModalOpen(true)}
+            disabled={!candidate || hasExistingRequest || requestsLoading}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Contact candidate
-            <span className="ml-2 text-xs font-normal">(Coming soon)</span>
+            Contact Candidate
           </button>
           <button
             type="button"
@@ -361,6 +422,13 @@ export default function CandidateDetailModal({
           </button>
         </div>
       </div>
+
+      <ContactCandidateModal
+        open={contactModalOpen}
+        candidate={candidate}
+        onClose={() => setContactModalOpen(false)}
+        onSuccess={handleContactRequestSent}
+      />
     </div>
   )
 }

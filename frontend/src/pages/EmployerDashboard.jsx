@@ -1,13 +1,43 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCandidateById, getCandidates } from '../api/candidates'
 import { getMyEmployerProfile } from '../api/employers'
+import { getCandidateById, getCandidates } from '../api/candidates'
 import CandidateCard from '../components/CandidateCard'
 import CandidateDetailModal from '../components/CandidateDetailModal'
 import { useSavedCandidates } from '../hooks/useSavedCandidates'
+import { getEmployerContactRequests } from '../services/contactRequestService'
 import { getApiErrorMessage } from '../utils/apiError'
+import { countByStatus } from '../utils/contactRequestHelpers'
 import { calculateProfileStrength } from '../utils/profileStrength'
 import { calculateEmployerProfileCompletion } from '../utils/employerHelpers'
+
+function ContactRequestsCard({ counts }) {
+  return (
+    <Link
+      to="/employer/requests"
+      className="flex h-full min-h-[140px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+    >
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+        </svg>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-500">Contact Requests</p>
+      <div className="mt-2 space-y-1 text-sm text-slate-700">
+        <p>
+          <span className="font-semibold text-amber-600">{counts.PENDING}</span> Pending
+        </p>
+        <p>
+          <span className="font-semibold text-green-600">{counts.ACCEPTED}</span> Accepted
+        </p>
+        <p>
+          <span className="font-semibold text-red-600">{counts.REJECTED}</span> Rejected
+        </p>
+      </div>
+    </Link>
+  )
+}
 
 function StatCard({ label, value, icon }) {
   return (
@@ -91,6 +121,11 @@ export default function EmployerDashboard() {
   const [candidates, setCandidates] = useState([])
   const [employerProfile, setEmployerProfile] = useState(null)
   const [profileExists, setProfileExists] = useState(false)
+  const [contactRequestCounts, setContactRequestCounts] = useState({
+    PENDING: 0,
+    ACCEPTED: 0,
+    REJECTED: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -114,9 +149,10 @@ export default function EmployerDashboard() {
       setError('')
 
       try {
-        const [candidatesResult, profileResult] = await Promise.allSettled([
+        const [candidatesResult, profileResult, requestsResult] = await Promise.allSettled([
           getCandidates({}),
           getMyEmployerProfile(),
+          getEmployerContactRequests(),
         ])
 
         if (cancelled) {
@@ -141,6 +177,14 @@ export default function EmployerDashboard() {
         } else {
           setEmployerProfile(null)
           setProfileExists(false)
+        }
+
+        if (requestsResult.status === 'fulfilled') {
+          setContactRequestCounts(
+            countByStatus(Array.isArray(requestsResult.value) ? requestsResult.value : []),
+          )
+        } else {
+          setContactRequestCounts({ PENDING: 0, ACCEPTED: 0, REJECTED: 0 })
         }
       } finally {
         if (!cancelled) {
@@ -246,7 +290,7 @@ export default function EmployerDashboard() {
       {/* Section 2: Stats */}
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-slate-900">Overview</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatCard
             label="Candidates Available"
             value={stats.candidatesAvailable}
@@ -300,6 +344,7 @@ export default function EmployerDashboard() {
               </svg>
             }
           />
+          <ContactRequestsCard counts={contactRequestCounts} />
         </div>
         <p className="mt-2 text-xs text-slate-500">
           Student Profiles counts candidates with a fully complete profile (100% strength).
@@ -370,6 +415,17 @@ export default function EmployerDashboard() {
             icon={
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+              </svg>
+            }
+          />
+          <QuickActionCard
+            title="Contact Requests"
+            description="Review pending, accepted, and declined outreach to candidates."
+            to="/employer/requests"
+            icon={
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
             }
           />
