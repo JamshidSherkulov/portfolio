@@ -383,7 +383,7 @@ export default function EmployerDashboard() {
           <QuickActionCard
             title="Update Company Profile"
             description="Manage company details so candidates know who you are."
-            to="/employer/profile"
+            to="/employer/profile/edit"
             icon={
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
@@ -514,7 +514,7 @@ export default function EmployerDashboard() {
               </div>
               {!profileCompletion.isComplete && (
                 <Link
-                  to="/employer/profile"
+                  to="/employer/profile/edit"
                   className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                 >
                   Complete Profile

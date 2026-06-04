@@ -3,10 +3,10 @@ import { Link, NavLink } from 'react-router-dom'
 import { getMyEmployerProfile } from '../api/employers'
 import { getMyStudentProfile } from '../api/students'
 import { useAuth } from '../auth/AuthContext'
-import { getEmployerCompanyName } from '../utils/employerHelpers'
 import { isNotFoundError } from '../utils/formHelpers'
 import { getStudentContactRequests } from '../services/contactRequestService'
 import { countByStatus } from '../utils/contactRequestHelpers'
+import EmployerNavbarUserMenu from './EmployerNavbarUserMenu'
 import StudentNavbarUserMenu from './StudentNavbarUserMenu'
 
 const linkClass = ({ isActive }) =>
@@ -17,7 +17,7 @@ const linkClass = ({ isActive }) =>
   }`
 
 export default function Navbar() {
-  const { isAuthenticated, role, email, logout } = useAuth()
+  const { isAuthenticated, role, email } = useAuth()
   const [studentProfile, setStudentProfile] = useState(null)
   const [employerProfile, setEmployerProfile] = useState(null)
   const [studentProfileLoaded, setStudentProfileLoaded] = useState(false)
@@ -119,14 +119,6 @@ export default function Navbar() {
     }
   }, [isAuthenticated, role])
 
-  let userLabel = null
-
-  if (isAuthenticated && role === 'EMPLOYER') {
-    userLabel = employerProfileLoaded
-      ? getEmployerCompanyName(employerProfile)
-      : 'My Company'
-  }
-
   return (
     <header className="border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
@@ -200,19 +192,11 @@ export default function Navbar() {
           )}
 
           {isAuthenticated && role === 'EMPLOYER' && (
-            <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
-              {userLabel && (
-                <span className="hidden text-sm font-medium text-slate-700 sm:inline">
-                  {`\uD83C\uDFE2 ${userLabel}`}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-              >
-                Logout
-              </button>
+            <div className="ml-2 border-l border-slate-200 pl-4">
+              <EmployerNavbarUserMenu
+                profile={employerProfile}
+                profileLoaded={employerProfileLoaded}
+              />
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   createMyEmployerProfile,
   getMyEmployerProfile,
@@ -41,7 +42,7 @@ function formToPayload(form) {
   }
 }
 
-export default function EmployerProfilePage() {
+export default function EmployerProfileEditPage() {
   const [form, setForm] = useState(emptyForm)
   const [profileExists, setProfileExists] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -119,12 +120,24 @@ export default function EmployerProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-3xl font-bold text-slate-900">Company profile</h1>
-      <p className="mt-2 text-slate-600">
-        {profileExists
-          ? 'Update your company details so candidates know who you are.'
-          : 'Set up your company profile to start discovering junior developer talent.'}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Edit company profile</h1>
+          <p className="mt-2 text-slate-600">
+            {profileExists
+              ? 'Update your company details so candidates know who you are.'
+              : 'Set up your company profile to start discovering junior developer talent.'}
+          </p>
+        </div>
+        {profileExists && (
+          <Link
+            to="/employer/profile"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            View profile
+          </Link>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (

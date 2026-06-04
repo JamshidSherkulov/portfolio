@@ -6,7 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import EmployerCandidatesPage from './pages/EmployerCandidatesPage'
 import EmployerContactRequests from './pages/EmployerContactRequests'
 import EmployerDashboard from './pages/EmployerDashboard'
-import EmployerProfilePage from './pages/EmployerProfilePage'
+import EmployerProfileEditPage from './pages/EmployerProfileEditPage'
+import EmployerProfilePreviewPage from './pages/EmployerProfilePreviewPage'
 import SavedCandidatesPage from './pages/SavedCandidatesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -80,10 +81,18 @@ export default function App() {
                 }
               />
               <Route
+                path="/employer/profile/edit"
+                element={
+                  <ProtectedRoute allowedRoles={['EMPLOYER']}>
+                    <EmployerProfileEditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/employer/profile"
                 element={
                   <ProtectedRoute allowedRoles={['EMPLOYER']}>
-                    <EmployerProfilePage />
+                    <EmployerProfilePreviewPage />
                   </ProtectedRoute>
                 }
               />

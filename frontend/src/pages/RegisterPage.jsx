@@ -175,7 +175,7 @@ export default function RegisterPage() {
     if (role === 'STUDENT') {
       navigate('/student/profile/edit', { replace: true })
     } else if (role === 'EMPLOYER') {
-      navigate('/employer/profile', { replace: true })
+      navigate('/employer/profile/edit', { replace: true })
     }
   }, [isAuthenticated, role, navigate])
 
@@ -213,7 +213,7 @@ export default function RegisterPage() {
       if (data.role === 'STUDENT') {
         navigate('/student/profile/edit')
       } else if (data.role === 'EMPLOYER') {
-        navigate('/employer/profile')
+        navigate('/employer/profile/edit')
       }
     } catch (err) {
       setError(getApiErrorMessage(err, 'Registration failed. Please try again.'))
