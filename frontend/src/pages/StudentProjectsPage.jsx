@@ -265,7 +265,7 @@ export default function StudentProjectsPage() {
       {needsProfile && (
         <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Create your student profile before adding projects.{' '}
-          <Link to="/student/profile" className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link to="/student/profile/edit" className="font-medium text-indigo-600 hover:text-indigo-700">
             Go to profile
           </Link>
         </div>

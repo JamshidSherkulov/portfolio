@@ -173,7 +173,7 @@ export default function RegisterPage() {
       return
     }
     if (role === 'STUDENT') {
-      navigate('/student/profile', { replace: true })
+      navigate('/student/profile/edit', { replace: true })
     } else if (role === 'EMPLOYER') {
       navigate('/employer/profile', { replace: true })
     }
@@ -211,7 +211,7 @@ export default function RegisterPage() {
     try {
       const data = await register(email.trim(), password, selectedRole)
       if (data.role === 'STUDENT') {
-        navigate('/student/profile')
+        navigate('/student/profile/edit')
       } else if (data.role === 'EMPLOYER') {
         navigate('/employer/profile')
       }

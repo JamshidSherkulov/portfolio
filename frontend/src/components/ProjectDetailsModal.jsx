@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 function formatProjectDate(value) {
   if (!value) {
     return null
@@ -42,7 +44,50 @@ function StatusBadge({ status }) {
   )
 }
 
-export default function ProjectDetailsModal({ project, onClose, onEdit }) {
+function ProjectImagePreview({ project }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const imageUrl = project?.imageUrl?.trim()
+  const showImage = Boolean(imageUrl) && !imageFailed
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [imageUrl])
+
+  if (!showImage) {
+    return null
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt=""
+      onError={() => setImageFailed(true)}
+      className="max-h-64 w-full rounded-lg border border-slate-200 object-cover"
+    />
+  )
+}
+
+export default function ProjectDetailsModal({
+  project,
+  onClose,
+  onEdit,
+  stacked = false,
+}) {
+  useEffect(() => {
+    if (!project) {
+      return undefined
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [project, onClose])
+
   if (!project) {
     return null
   }
@@ -52,10 +97,11 @@ export default function ProjectDetailsModal({ project, onClose, onEdit }) {
   const updatedLabel = formatProjectDate(project.updatedAt)
   const showDemo = isDemoAvailable(project.liveDemoUrl)
   const showGithub = Boolean(project.githubUrl?.trim())
+  const overlayZIndex = stacked ? 'z-[60]' : 'z-50'
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 ${overlayZIndex} flex items-center justify-center p-4`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="project-details-title"
@@ -76,7 +122,7 @@ export default function ProjectDetailsModal({ project, onClose, onEdit }) {
               </h2>
               <StatusBadge status={project.status} />
             </div>
-            {project.projectType && (
+            {project.projectType?.trim() && (
               <p className="mt-1 text-sm text-slate-500">{project.projectType}</p>
             )}
           </div>
@@ -92,36 +138,34 @@ export default function ProjectDetailsModal({ project, onClose, onEdit }) {
           </button>
         </div>
 
-        <div className="space-y-6 px-6 py-6">
-          {project.imageUrl?.trim() && (
-            <img
-              src={project.imageUrl}
-              alt={project.title}
-              className="w-full rounded-lg border border-slate-200 object-cover"
-            />
-          )}
+        <div className="space-y-5 px-6 py-6">
+          <ProjectImagePreview project={project} />
 
-          {project.description && (
-            <section>
-              <h3 className="text-sm font-semibold text-slate-900">Description</h3>
+          <section>
+            <h3 className="text-sm font-semibold text-slate-900">Description</h3>
+            {project.description?.trim() ? (
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                 {project.description}
               </p>
-            </section>
-          )}
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">No description added.</p>
+            )}
+          </section>
 
-          {project.proofSummary && (
-            <section>
-              <h3 className="text-sm font-semibold text-slate-900">
-                What this project proves
-              </h3>
+          <section>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              What this project proves
+            </h3>
+            {project.proofSummary?.trim() ? (
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                 {project.proofSummary}
               </p>
-            </section>
-          )}
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">No proof summary added.</p>
+            )}
+          </section>
 
-          {techStack.length > 0 && (
+          {techStack.length > 0 ? (
             <section>
               <h3 className="text-sm font-semibold text-slate-900">Tech stack</h3>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -134,6 +178,11 @@ export default function ProjectDetailsModal({ project, onClose, onEdit }) {
                   </span>
                 ))}
               </div>
+            </section>
+          ) : (
+            <section>
+              <h3 className="text-sm font-semibold text-slate-900">Tech stack</h3>
+              <p className="mt-2 text-sm text-slate-500">No tech stack listed.</p>
             </section>
           )}
 
@@ -178,13 +227,15 @@ export default function ProjectDetailsModal({ project, onClose, onEdit }) {
           >
             Close
           </button>
-          <button
-            type="button"
-            onClick={() => onEdit(project)}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            Edit
-          </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(project)}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Edit
+            </button>
+          )}
         </div>
       </div>
     </div>

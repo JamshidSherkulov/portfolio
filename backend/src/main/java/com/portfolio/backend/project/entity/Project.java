@@ -52,7 +52,7 @@ public class Project {
     @Column(length = 255)
     private String liveDemoUrl;
 
-    @Column(length = 255)
+    @Column(length = 255)   
     private String imageUrl;
 
     @Column(length = 120)

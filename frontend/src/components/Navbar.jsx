@@ -7,6 +7,7 @@ import { getEmployerCompanyName } from '../utils/employerHelpers'
 import { isNotFoundError } from '../utils/formHelpers'
 import { getStudentContactRequests } from '../services/contactRequestService'
 import { countByStatus } from '../utils/contactRequestHelpers'
+import StudentNavbarUserMenu from './StudentNavbarUserMenu'
 
 const linkClass = ({ isActive }) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -14,19 +15,6 @@ const linkClass = ({ isActive }) =>
       ? 'bg-indigo-50 text-indigo-700'
       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
   }`
-
-function getStudentDisplayName(profile, email) {
-  const firstName = profile?.firstName?.trim()
-  const lastName = profile?.lastName?.trim()
-
-  if (firstName && lastName) {
-    return `${firstName} ${lastName}`
-  }
-  if (firstName) {
-    return firstName
-  }
-  return email
-}
 
 export default function Navbar() {
   const { isAuthenticated, role, email, logout } = useAuth()
@@ -133,11 +121,6 @@ export default function Navbar() {
 
   let userLabel = null
 
-  if (isAuthenticated && role === 'STUDENT') {
-    userLabel =
-      studentProfileLoaded ? getStudentDisplayName(studentProfile, email) : email
-  }
-
   if (isAuthenticated && role === 'EMPLOYER') {
     userLabel = employerProfileLoaded
       ? getEmployerCompanyName(employerProfile)
@@ -205,11 +188,22 @@ export default function Navbar() {
             </>
           )}
 
-          {isAuthenticated && (
+          {isAuthenticated && role === 'STUDENT' && (
+            <div className="ml-2 border-l border-slate-200 pl-4">
+              <StudentNavbarUserMenu
+                profile={studentProfile}
+                profileLoaded={studentProfileLoaded}
+                email={email}
+                pendingRequestCount={pendingRequestCount}
+              />
+            </div>
+          )}
+
+          {isAuthenticated && role === 'EMPLOYER' && (
             <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
               {userLabel && (
                 <span className="hidden text-sm font-medium text-slate-700 sm:inline">
-                  {role === 'EMPLOYER' ? `\uD83C\uDFE2 ${userLabel}` : userLabel}
+                  {`\uD83C\uDFE2 ${userLabel}`}
                 </span>
               )}
               <button

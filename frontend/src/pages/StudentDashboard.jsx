@@ -198,10 +198,10 @@ function ProfilePreviewCard({ profile, hasProfile }) {
       )}
 
       <Link
-        to="/student/profile"
+        to={hasProfile ? '/student/profile' : '/student/profile/edit'}
         className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700"
       >
-        {hasProfile ? 'Edit profile' : 'Create profile'}
+        {hasProfile ? 'View profile' : 'Create profile'}
       </Link>
     </article>
   )
@@ -312,7 +312,7 @@ export default function StudentDashboard() {
             </p>
           </div>
           <Link
-            to="/student/profile"
+            to="/student/profile/edit"
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Complete your profile
@@ -368,7 +368,7 @@ export default function StudentDashboard() {
 
           <div className="flex flex-wrap gap-3">
             <Link
-              to="/student/profile"
+              to="/student/profile/edit"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
             >
               Edit profile

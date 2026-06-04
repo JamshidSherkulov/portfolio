@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import SaveCandidateButton from './SaveCandidateButton'
 import CandidateAvatar from './CandidateAvatar'
+import CandidateProjectList from './CandidateProjectList'
 import ContactCandidateModal from './ContactCandidateModal'
 import ContactRequestStatusBadge from './ContactRequestStatusBadge'
 import ProfileStrengthSection from './ProfileStrengthSection'
+import ProjectDetailsModal from './ProjectDetailsModal'
 import {
   calculateProfileStrength,
 } from '../utils/profileStrength'
@@ -13,33 +15,6 @@ import {
   getContactRequestForStudent,
   getEmployerContactState,
 } from '../utils/contactRequestHelpers'
-
-function isDemoAvailable(url) {
-  if (!url?.trim()) {
-    return false
-  }
-  return url.trim().toLowerCase() !== 'coming soon'
-}
-
-function StatusBadge({ status }) {
-  if (!status?.trim()) {
-    return null
-  }
-
-  const normalized = status.trim().toLowerCase()
-  const isInProgress = normalized.includes('progress')
-  const badgeClass = isInProgress
-    ? 'bg-amber-50 text-amber-700 ring-amber-200'
-    : 'bg-indigo-50 text-indigo-700 ring-indigo-200'
-
-  return (
-    <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${badgeClass}`}
-    >
-      {status.trim()}
-    </span>
-  )
-}
 
 function Section({ title, children }) {
   return (
@@ -66,82 +41,6 @@ function DetailRow({ label, value }) {
   )
 }
 
-function ProjectCard({ project }) {
-  const techStack = Array.isArray(project.techStack) ? project.techStack : []
-  const showGithub = Boolean(project.githubUrl?.trim())
-  const showDemo = isDemoAvailable(project.liveDemoUrl)
-
-  return (
-    <article className="h-full rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h5 className="font-semibold leading-snug text-slate-900">{project.title}</h5>
-        <StatusBadge status={project.status} />
-      </div>
-
-      {project.projectType?.trim() && (
-        <p className="mt-1 text-xs font-medium text-slate-500">{project.projectType}</p>
-      )}
-
-      {project.description?.trim() ? (
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">{project.description}</p>
-      ) : (
-        <p className="mt-3 text-sm text-slate-500">No description added.</p>
-      )}
-
-      <div className="mt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          What this project proves
-        </p>
-        {project.proofSummary?.trim() ? (
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">{project.proofSummary}</p>
-        ) : (
-          <p className="mt-1 text-sm text-slate-500">No proof summary added.</p>
-        )}
-      </div>
-
-      {techStack.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {techStack.map((tech, index) => (
-            <span
-              key={`${tech}-${index}`}
-              className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm text-slate-500">No tech stack listed.</p>
-      )}
-
-      {(showGithub || showDemo) && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {showGithub && (
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
-            >
-              GitHub
-            </a>
-          )}
-          {showDemo && (
-            <a
-              href={project.liveDemoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
-            >
-              Live demo
-            </a>
-          )}
-        </div>
-      )}
-    </article>
-  )
-}
-
 export default function CandidateDetailModal({
   open,
   loading,
@@ -155,6 +54,7 @@ export default function CandidateDetailModal({
   const [employerRequests, setEmployerRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(false)
   const [contactModalOpen, setContactModalOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null)
 
   useEffect(() => {
     if (!open || !candidate?.id) {
@@ -388,15 +288,10 @@ export default function CandidateDetailModal({
               </Section>
 
               <Section title="Projects">
-                {projects.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {projects.map((project) => (
-                      <ProjectCard key={project.id} project={project} />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyText>No projects added yet.</EmptyText>
-                )}
+                <CandidateProjectList
+                  projects={projects}
+                  onViewDetails={setSelectedProject}
+                />
               </Section>
             </>
           )}
@@ -434,6 +329,12 @@ export default function CandidateDetailModal({
         candidate={candidate}
         onClose={() => setContactModalOpen(false)}
         onSuccess={handleContactRequestSent}
+      />
+
+      <ProjectDetailsModal
+        project={selectedProject}
+        onClose={() => setSelectedProject(null)}
+        stacked
       />
     </div>
   )

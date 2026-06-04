@@ -12,7 +12,8 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import StudentDashboard from './pages/StudentDashboard'
-import StudentProfilePage from './pages/StudentProfilePage'
+import StudentProfileEditPage from './pages/StudentProfileEditPage'
+import StudentProfilePreviewPage from './pages/StudentProfilePreviewPage'
 import StudentProjectsPage from './pages/StudentProjectsPage'
 import StudentRequests from './pages/StudentRequests'
 
@@ -38,10 +39,18 @@ export default function App() {
                 }
               />
               <Route
+                path="/student/profile/edit"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <StudentProfileEditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/student/profile"
                 element={
                   <ProtectedRoute allowedRoles={['STUDENT']}>
-                    <StudentProfilePage />
+                    <StudentProfilePreviewPage />
                   </ProtectedRoute>
                 }
               />

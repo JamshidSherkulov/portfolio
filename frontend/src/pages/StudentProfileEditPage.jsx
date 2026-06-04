@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   createMyStudentProfile,
   getMyStudentProfile,
@@ -84,7 +85,7 @@ function FormSection({ title, children }) {
   )
 }
 
-export default function StudentProfilePage() {
+export default function StudentProfileEditPage() {
   const [form, setForm] = useState(emptyForm)
   const [hasProfile, setHasProfile] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -166,12 +167,24 @@ export default function StudentProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-3xl font-bold text-slate-900">Student profile</h1>
-      <p className="mt-2 text-slate-600">
-        {hasProfile
-          ? 'Update your profile so employers can discover your skills and experience.'
-          : 'Create your profile to start building your proof-of-work portfolio.'}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Edit profile</h1>
+          <p className="mt-2 text-slate-600">
+            {hasProfile
+              ? 'Update your profile so employers can discover your skills and experience.'
+              : 'Create your profile to start building your proof-of-work portfolio.'}
+          </p>
+        </div>
+        {hasProfile && (
+          <Link
+            to="/student/profile"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            View profile
+          </Link>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
