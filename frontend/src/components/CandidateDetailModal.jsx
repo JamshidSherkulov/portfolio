@@ -9,7 +9,10 @@ import {
 } from '../utils/profileStrength'
 import { formatCandidateName } from '../utils/candidateHelpers'
 import { getEmployerContactRequests } from '../services/contactRequestService'
-import { getContactRequestForStudent } from '../utils/contactRequestHelpers'
+import {
+  getContactRequestForStudent,
+  getEmployerContactState,
+} from '../utils/contactRequestHelpers'
 
 function isDemoAvailable(url) {
   if (!url?.trim()) {
@@ -203,7 +206,7 @@ export default function CandidateDetailModal({
   const existingContactRequest = candidate
     ? getContactRequestForStudent(employerRequests, candidate.id)
     : null
-  const hasExistingRequest = Boolean(existingContactRequest)
+  const contactState = getEmployerContactState(existingContactRequest)
 
   const skills = Array.isArray(candidate?.skills) ? candidate.skills : []
   const projects = Array.isArray(candidate?.projects) ? candidate.projects : []
@@ -400,15 +403,18 @@ export default function CandidateDetailModal({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
-          <div className="mr-auto flex flex-wrap items-center gap-2">
-            {existingContactRequest && (
+          <div className="mr-auto flex min-w-0 flex-col gap-1.5">
+            {contactState.showStatusBadge && existingContactRequest && (
               <ContactRequestStatusBadge status={existingContactRequest.status} />
+            )}
+            {contactState.helperText && (
+              <p className="max-w-md text-xs text-slate-500">{contactState.helperText}</p>
             )}
           </div>
           <button
             type="button"
             onClick={() => setContactModalOpen(true)}
-            disabled={!candidate || hasExistingRequest || requestsLoading}
+            disabled={!candidate || requestsLoading || contactState.disableContact}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Contact Candidate

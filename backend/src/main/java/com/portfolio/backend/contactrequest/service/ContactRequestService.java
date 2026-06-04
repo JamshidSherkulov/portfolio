@@ -17,12 +17,15 @@ import com.portfolio.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ContactRequestService {
+    private static final long REJECTED_REQUEST_COOLDOWN_DAYS = 7;
 
     private final ContactRequestRepository contactRequestRepository;
     private final EmployerProfileRepository employerProfileRepository;
@@ -45,27 +48,17 @@ public class ContactRequestService {
         StudentProfile studentProfile = studentProfileRepository.findById(request.studentProfileId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
 
-        if (contactRequestRepository.existsByEmployerProfileAndStudentProfile(
-                employerProfile,
-                studentProfile
-        )) {
-            ContactRequest existingRequest = contactRequestRepository
-                    .findByEmployerProfileAndStudentProfile(employerProfile, studentProfile)
-                    .orElseThrow();
-
-            return toResponse(existingRequest);
-        }
-
-        ContactRequest contactRequest = ContactRequest.builder()
-                .employerProfile(employerProfile)
-                .studentProfile(studentProfile)
-                .message(clean(request.message()))
-                .status(ContactRequestStatus.PENDING)
-                .build();
-
-        ContactRequest savedRequest = contactRequestRepository.save(contactRequest);
-
-        return toResponse(savedRequest);
+        return contactRequestRepository
+                .findByEmployerProfileAndStudentProfile(employerProfile, studentProfile)
+                .map(existingRequest -> handleExistingContactRequest(
+                        existingRequest,
+                        request.message()
+                ))
+                .orElseGet(() -> createNewContactRequest(
+                        employerProfile,
+                        studentProfile,
+                        request.message()
+                ));
     }
 
     public List<ContactRequestResponse> getEmployerContactRequests(
@@ -183,5 +176,85 @@ public class ContactRequestService {
         }
 
         return cleaned;
+    }
+
+    private ContactRequestResponse handleExistingContactRequest(
+            ContactRequest existingRequest,
+            String newMessage
+    ) {
+        if (existingRequest.getStatus() == ContactRequestStatus.PENDING) {
+            throw new RuntimeException("You already have a pending contact request for this candidate");
+        }
+
+        if (existingRequest.getStatus() == ContactRequestStatus.ACCEPTED) {
+            throw new RuntimeException("This candidate has already accepted your contact request");
+        }
+
+        if (existingRequest.getStatus() == ContactRequestStatus.REJECTED) {
+            if (!canResendRejectedRequest(existingRequest)) {
+                long daysRemaining = getRejectedCooldownDaysRemaining(existingRequest);
+
+                throw new RuntimeException(
+                        "This candidate declined your request. You can send another request in "
+                                + daysRemaining
+                                + " day(s)."
+                );
+            }
+
+            existingRequest.setMessage(clean(newMessage));
+            existingRequest.setStatus(ContactRequestStatus.PENDING);
+
+            ContactRequest updatedRequest = contactRequestRepository.save(existingRequest);
+
+            return toResponse(updatedRequest);
+        }
+
+        throw new RuntimeException("Unable to process contact request");
+    }
+
+    private ContactRequestResponse createNewContactRequest(
+            EmployerProfile employerProfile,
+            StudentProfile studentProfile,
+            String message
+    ) {
+        ContactRequest contactRequest = ContactRequest.builder()
+                .employerProfile(employerProfile)
+                .studentProfile(studentProfile)
+                .message(clean(message))
+                .status(ContactRequestStatus.PENDING)
+                .build();
+
+        ContactRequest savedRequest = contactRequestRepository.save(contactRequest);
+
+        return toResponse(savedRequest);
+    }
+
+    private boolean canResendRejectedRequest(ContactRequest contactRequest) {
+        LocalDateTime lastUpdatedAt = contactRequest.getUpdatedAt();
+
+        if (lastUpdatedAt == null) {
+            return true;
+        }
+
+        return lastUpdatedAt
+                .plusDays(REJECTED_REQUEST_COOLDOWN_DAYS)
+                .isBefore(LocalDateTime.now());
+    }
+
+    private long getRejectedCooldownDaysRemaining(ContactRequest contactRequest) {
+        LocalDateTime lastUpdatedAt = contactRequest.getUpdatedAt();
+
+        if (lastUpdatedAt == null) {
+            return 0;
+        }
+
+        LocalDateTime resendAvailableAt = lastUpdatedAt.plusDays(REJECTED_REQUEST_COOLDOWN_DAYS);
+
+        long daysRemaining = ChronoUnit.DAYS.between(
+                LocalDateTime.now(),
+                resendAvailableAt
+        );
+
+        return Math.max(daysRemaining, 1);
     }
 }

@@ -111,9 +111,13 @@ export default function ContactCandidateModal({
         </div>
 
         {error && (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-            {error}
-          </p>
+          <div
+            className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-800"
+            role="alert"
+          >
+            <p className="font-medium">Unable to send request</p>
+            <p className="mt-1">{error}</p>
+          </div>
         )}
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">

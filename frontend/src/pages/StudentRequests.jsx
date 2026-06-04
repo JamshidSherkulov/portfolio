@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import EmployerCompanyProfileModal from '../components/EmployerCompanyProfileModal'
 import EmptyState from '../components/EmptyState'
 import { CardListSkeleton } from '../components/PageSkeleton'
 import { useToast } from '../context/ToastContext'
@@ -30,6 +31,8 @@ export default function StudentRequests() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [pendingId, setPendingId] = useState(null)
+  const [selectedRequest, setSelectedRequest] = useState(null)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -65,7 +68,24 @@ export default function StudentRequests() {
 
   const sortedRequests = useMemo(() => sortRequestsNewestFirst(requests), [requests])
 
-  async function handleStatusUpdate(requestId, status) {
+  const modalRequest = useMemo(() => {
+    if (!selectedRequest) {
+      return null
+    }
+    return requests.find((request) => request.id === selectedRequest.id) ?? selectedRequest
+  }, [requests, selectedRequest])
+
+  function openCompanyProfile(request) {
+    setSelectedRequest(request)
+    setProfileModalOpen(true)
+  }
+
+  function closeCompanyProfile() {
+    setProfileModalOpen(false)
+    setSelectedRequest(null)
+  }
+
+  async function handleStatusUpdate(requestId, status, { closeModal = false } = {}) {
     setPendingId(requestId)
 
     try {
@@ -73,7 +93,13 @@ export default function StudentRequests() {
       setRequests((current) =>
         current.map((request) => (request.id === requestId ? updated : request)),
       )
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest(updated)
+      }
       showToast(status === 'ACCEPTED' ? 'Request accepted.' : 'Request rejected.')
+      if (closeModal) {
+        closeCompanyProfile()
+      }
     } catch (err) {
       const message = getApiErrorMessage(err, 'Something went wrong.')
       showToast(message, 'error')
@@ -154,31 +180,49 @@ export default function StudentRequests() {
                   {formatRequestedDate(request.requestedAt)}
                 </p>
 
-                {request.status === 'PENDING' && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(request.id, 'ACCEPTED')}
-                      disabled={isUpdating}
-                      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
-                    >
-                      {isUpdating ? 'Updating...' : 'Accept'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
-                      disabled={isUpdating}
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openCompanyProfile(request)}
+                    className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                  >
+                    View company profile
+                  </button>
+                  {request.status === 'PENDING' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusUpdate(request.id, 'ACCEPTED')}
+                        disabled={isUpdating}
+                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {isUpdating ? 'Updating...' : 'Accept'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
+                        disabled={isUpdating}
+                        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
               </article>
             )
           })}
         </div>
       )}
+
+      <EmployerCompanyProfileModal
+        open={profileModalOpen}
+        request={modalRequest}
+        onClose={closeCompanyProfile}
+        onAccept={(requestId) => handleStatusUpdate(requestId, 'ACCEPTED', { closeModal: true })}
+        onReject={(requestId) => handleStatusUpdate(requestId, 'REJECTED', { closeModal: true })}
+        updating={modalRequest ? pendingId === modalRequest.id : false}
+      />
     </div>
   )
 }

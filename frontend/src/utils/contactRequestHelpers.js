@@ -73,17 +73,127 @@ export function getStatusDisplayLabel(status) {
   }
 }
 
+export const REJECTED_CONTACT_COOLDOWN_DAYS = 7
+
+export function canResendRejectedContactRequest(request) {
+  if (request?.status !== 'REJECTED') {
+    return false
+  }
+
+  const updatedAt = request.updatedAt
+  if (!updatedAt) {
+    return true
+  }
+
+  const resendAvailableAt = new Date(updatedAt)
+  resendAvailableAt.setDate(resendAvailableAt.getDate() + REJECTED_CONTACT_COOLDOWN_DAYS)
+
+  return resendAvailableAt.getTime() <= Date.now()
+}
+
+export function getRejectedCooldownDaysRemaining(request) {
+  if (request?.status !== 'REJECTED' || !request?.updatedAt) {
+    return 0
+  }
+
+  const resendAvailableAt = new Date(request.updatedAt)
+  resendAvailableAt.setDate(resendAvailableAt.getDate() + REJECTED_CONTACT_COOLDOWN_DAYS)
+
+  const millisecondsRemaining = resendAvailableAt.getTime() - Date.now()
+  if (millisecondsRemaining <= 0) {
+    return 0
+  }
+
+  const daysRemaining = Math.ceil(millisecondsRemaining / (1000 * 60 * 60 * 24))
+  return Math.max(daysRemaining, 1)
+}
+
+export function getEmployerContactState(existingRequest) {
+  if (!existingRequest) {
+    return {
+      canContact: true,
+      disableContact: false,
+      helperText: null,
+      showStatusBadge: false,
+    }
+  }
+
+  if (existingRequest.status === 'PENDING') {
+    return {
+      canContact: false,
+      disableContact: true,
+      helperText: null,
+      showStatusBadge: true,
+    }
+  }
+
+  if (existingRequest.status === 'ACCEPTED') {
+    return {
+      canContact: false,
+      disableContact: true,
+      helperText: null,
+      showStatusBadge: true,
+    }
+  }
+
+  if (existingRequest.status === 'REJECTED') {
+    const canResend = canResendRejectedContactRequest(existingRequest)
+
+    if (canResend) {
+      return {
+        canContact: true,
+        disableContact: false,
+        helperText: null,
+        showStatusBadge: true,
+      }
+    }
+
+    const daysRemaining = getRejectedCooldownDaysRemaining(existingRequest)
+    const helperText =
+      daysRemaining > 0
+        ? `You can send another request in ${daysRemaining} day(s).`
+        : `You can send another request after ${REJECTED_CONTACT_COOLDOWN_DAYS} days.`
+
+    return {
+      canContact: false,
+      disableContact: true,
+      helperText,
+      showStatusBadge: true,
+    }
+  }
+
+  return {
+    canContact: true,
+    disableContact: false,
+    helperText: null,
+    showStatusBadge: false,
+  }
+}
+
 export function getStatusBadgeLabel(status) {
   switch (status) {
     case 'PENDING':
-      return 'Pending Contact Request'
+      return 'Pending contact request'
     case 'ACCEPTED':
-      return 'Contact Accepted'
+      return 'Contact accepted'
     case 'REJECTED':
-      return 'Request Declined'
+      return 'Request declined'
     default:
       return null
   }
+}
+
+export function getCompanyInitials(companyName) {
+  if (!companyName?.trim()) {
+    return '?'
+  }
+
+  const words = companyName.trim().split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase()
+  }
+
+  return companyName.trim().slice(0, 2).toUpperCase()
 }
 
 export function getStatusColorClasses(status) {
