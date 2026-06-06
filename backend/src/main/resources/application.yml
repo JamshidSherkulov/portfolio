@@ -3,9 +3,9 @@ spring:
     name: portfolio-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/portfolio_db
-    username: portfolio-user
-    password: portfolio0309
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/portfolio_db}
+    username: ${DATABASE_USERNAME:portfolio-user}
+    password: ${DATABASE_PASSWORD}
 
   jpa:
     hibernate:
@@ -18,10 +18,10 @@ spring:
         format_sql: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 application:
   security:
     jwt:
-      secret-key: 1234567890123456789012345678901234567890123456789012345678901234
-      expiration: 3600000
+      secret-key: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION}
